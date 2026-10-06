@@ -10,10 +10,10 @@ class VoterController extends Controller
 {
     public function login(Request $request)
     {
-        // 1. Validasi Input
+        // 1. Validasi Input (gunakan string biasa agar fleksibel)
         $request->validate([
-            'nik' => 'required|numeric|digits:16',
-            'birth_date' => 'required|date_format:Y-m-d',
+            'nik' => 'required|string',
+            'birth_date' => 'required|date',
         ]);
 
         // 2. Cek Data Pemilih di Supabase
@@ -22,25 +22,15 @@ class VoterController extends Controller
             ->where('birth_date', $request->birth_date)
             ->first();
 
-        // 3. Jika Data Tidak Ditemukan
+        // 3. Jika Data Tidak Ditemukan dalam DPT
         if (!$voter) {
-            return response()->json([
-                'success' => false,
-                'message' => 'NIK atau Tanggal Lahir tidak terdaftar dalam DPT!'
-            ], 401);
+            return back()->with('error', 'NIK atau Tanggal Lahir tidak terdaftar dalam DPT!');
         }
 
-        // 4. Berhasil Login - Mengembalikan Data Pemilih
-        return response()->json([
-            'success' => true,
-            'message' => 'Login berhasil!',
-            'data' => [
-                'id' => $voter->id,
-                'nik' => $voter->nik,
-                'name' => $voter->name,
-                'rt_rw' => $voter->rt_rw,
-                'has_voted' => (bool) $voter->has_voted,
-            ]
-        ], 200);
+        // 4. Berhasil Login - Simpan ke Session
+        session(['voter' => $voter]);
+
+        // Redirect langsung ke route dashboard
+        return redirect()->route('dashboard')->with('success', 'Login berhasil!');
     }
 }
