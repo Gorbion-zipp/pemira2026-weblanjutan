@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\VoterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\VoteController;
+use App\Http\Controllers\LiveCountController;
 
 // Halaman Login
 Route::get('/', function () {
@@ -37,3 +39,15 @@ Route::post('/logout', function (Request $request) {
 
     return redirect()->route('login')->with('success', 'Berhasil keluar!');
 })->name('logout');
+
+Route::get('/', function () {
+    return Inertia::render('home');
+})->name('home');
+
+// Route Live Count Publik
+Route::get('/live-count', [LiveCountController::class, 'index'])->name('live-count');
+
+// Route Bilik Suara & Sukses
+Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
+Route::post('/vote/submit', [VoteController::class, 'submit'])->name('vote.submit');
+Route::get('/vote/success', [VoteController::class, 'success'])->name('vote.success');
