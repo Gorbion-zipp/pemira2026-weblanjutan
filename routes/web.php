@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\LiveCountController;
+use App\Http\Controllers\AdminController;
+use App\Http\Middleware\AdminMiddleware;
 
 // Halaman Login
 Route::get('/', function () {
@@ -51,3 +53,26 @@ Route::get('/live-count', [LiveCountController::class, 'index'])->name('live-cou
 Route::get('/vote', [VoteController::class, 'index'])->name('vote.index');
 Route::post('/vote/submit', [VoteController::class, 'submit'])->name('vote.submit');
 Route::get('/vote/success', [VoteController::class, 'success'])->name('vote.success');
+
+// Route Auth Admin (Publik)
+Route::get('/admin/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminController::class, 'login']);
+Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
+
+// Area Terproteksi Admin (Menggunakan AdminMiddleware)
+Route::prefix('admin')->name('admin.')->middleware(AdminMiddleware::class)->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    
+    // Manajemen DPT
+    Route::post('/voters', [AdminController::class, 'storeVoter'])->name('voters.store');
+    Route::post('/voters/{id}/reset', [AdminController::class, 'resetVoterStatus'])->name('voters.reset');
+    Route::delete('/voters/{id}', [AdminController::class, 'deleteVoter'])->name('voters.delete');
+
+    // Manajemen Paslon (CRUD)
+    Route::post('/candidates', [AdminController::class, 'storeCandidate'])->name('candidates.store');
+    Route::post('/candidates/{id}', [AdminController::class, 'updateCandidate'])->name('candidates.update');
+    Route::delete('/candidates/{id}', [AdminController::class, 'deleteCandidate'])->name('candidates.delete');
+
+    // Reset Suara
+    Route::post('/reset-election', [AdminController::class, 'resetElection'])->name('reset-election');
+});

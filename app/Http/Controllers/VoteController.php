@@ -5,23 +5,34 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Illuminate\Support\Str;
 
 class VoteController extends Controller
 {
     public function index(Request $request)
     {
-        $voter = session('voter');
+        $voterSession = session('voter');
 
-        if (!$voter) {
+        if (!$voterSession) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu!');
         }
 
-        if ($voter->has_voted) {
+        // Cek status terbaru dari database
+        $voter = DB::table('voters')->where('id', $voterSession->id)->first();
+
+        if (!$voter || $voter->has_voted) {
             return redirect()->route('dashboard')->with('error', 'Anda sudah menggunakan hak pilih!');
         }
 
-        return Inertia::render('vote/index');
+        // Ambil data kandidat aktif secara dinamis dari database
+        $candidates = DB::table('candidates')
+            ->select('id', 'candidate_number', 'name', 'vice_name', 'vision_mission', 'photo_url')
+            ->orderBy('candidate_number', 'asc')
+            ->get();
+
+        return Inertia::render('vote/index', [
+            'voter' => $voter,
+            'candidates' => $candidates,
+        ]);
     }
 
     public function submit(Request $request)
@@ -31,6 +42,11 @@ class VoteController extends Controller
         if (!$voterSession) {
             return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir.');
         }
+
+        // Validasi bahwa candidate_id harus ada di tabel candidates
+        $request->validate([
+            'candidate_id' => 'required|exists:candidates,id',
+        ]);
 
         // Cek kembali status pemilih di DB
         $voter = DB::table('voters')->where('id', $voterSession->id)->first();
@@ -46,7 +62,7 @@ class VoteController extends Controller
                 'created_at' => now(),
             ]);
 
-            // 2. Kunci status pemilih
+            // 2. Kunci status pemilih di DB
             DB::table('voters')->where('id', $voter->id)->update([
                 'has_voted' => true,
             ]);

@@ -21,31 +21,13 @@ interface VoteProps {
     candidates?: Candidate[];
 }
 
-export default function VotePage({ candidates }: VoteProps) {
+export default function VotePage({ candidates = [] }: VoteProps) {
     const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const defaultCandidates: Candidate[] = [
-        {
-            id: 1,
-            candidate_number: '01',
-            name: 'Dede Ganteng',
-            vice_name: 'I Made Budiasa',
-            vision_mission: 'Mewujudkan Desa Digital yang Transparan, Maju, dan Sejahtera.',
-            photo_url: '/images/dede.png',
-        },
-        {
-            id: 2,
-            candidate_number: '02',
-            name: 'I Putu Wirayudha Brahmananda',
-            vice_name: 'I Ketut Agus',
-            vision_mission: 'Mengembangkan Potensi Ekonomi Lokal dan Pemberdayaan Pemuda Desa.',
-            photo_url: '/images/nanda.png',
-        },
-    ];
-
-    const candidateList = candidates && candidates.length > 0 ? candidates : defaultCandidates;
+    // Ambil data kandidat dari props database Supabase
+const candidateList = candidates || [];
 
     const handleSelect = (candidate: Candidate) => {
         setSelectedCandidate(candidate);
@@ -120,48 +102,53 @@ export default function VotePage({ candidates }: VoteProps) {
                 </div>
 
                 {/* Candidate Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto w-full">
-                    {candidateList.map((cand) => (
-                        <div
-                            key={cand.id}
-                            onClick={() => handleSelect(cand)}
-                            className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 group shadow-xl dark:shadow-2xl relative overflow-hidden cursor-pointer"
-                        >
-                            <div className="absolute top-4 right-4 px-3 py-1 bg-blue-600 text-white font-extrabold text-sm rounded-xl shadow-lg z-10">
-                                No. {cand.candidate_number}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto w-full">
+                {candidateList.map((cand) => (
+                    <div
+                        key={cand.id}
+                        onClick={() => handleSelect(cand)}
+                        className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 group shadow-xl dark:shadow-2xl relative overflow-hidden cursor-pointer"
+                    >
+                        <div>
+                            {/* Kontainer Foto Kandidat */}
+                            <div className="relative w-full h-[320px] bg-slate-100 dark:bg-slate-900 rounded-2xl overflow-hidden mb-4">
+                                <img
+                                    src={cand.photo_url || '/images/default-avatar.png'}
+                                    alt={cand.name}
+                                    onError={(e) => {
+                                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cand.name)}&background=0D8ABC&color=fff`;
+                                    }}
+                                    className="w-full h-full object-cover object-top transition duration-300 group-hover:scale-105"
+                                />
+                                <span className="absolute top-3 right-3 px-3 py-1 bg-blue-600 text-white font-extrabold text-xs rounded-xl shadow-md z-10">
+                                    No. {cand.candidate_number}
+                                </span>
                             </div>
 
-                            <div>
-                                <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-950 rounded-2xl overflow-hidden mb-5 border border-slate-200 dark:border-slate-800">
-                                    <img
-                                        src={cand.photo_url}
-                                        alt={cand.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{cand.name}</h3>
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+                                Wakil: {cand.vice_name}
+                            </p>
 
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{cand.name}</h3>
-                                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
-                                    Wakil: {cand.vice_name}
-                                </p>
-
+                            {cand.vision_mission && cand.vision_mission.trim() !== '' && (
                                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-4 leading-relaxed bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80">
                                     "{cand.vision_mission}"
                                 </p>
-                            </div>
-
-                            <button
-                                type="button"
-                                className="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
-                            >
-                                <Vote className="h-4 w-4" />
-                                <span>Pilih Paslon {cand.candidate_number}</span>
-                            </button>
+                            )}
                         </div>
-                    ))}
-                </div>
-            </main>
 
+                        <button
+                            type="button"
+                            className="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+                        >
+                            <Vote className="h-4 w-4" />
+                            <span>Pilih Paslon {cand.candidate_number}</span>
+                        </button>
+                    </div>
+                ))}
+            </div>
+            </main>
+            
             {/* Modal Konfirmasi */}
             {isConfirmOpen && selectedCandidate && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/70 backdrop-blur-sm">
